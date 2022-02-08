@@ -87,112 +87,14 @@ class GUILiga:
             padx=(event.width - self.frame_principal.winfo_width() - 4) // 2
         ))
 
-        self.label_classificacao = tk.Label(self.frame_principal, text='CLASSIFICAÇÃO',
-                                            height=3, font='rockwell 13 bold', fg='#078745')
-        self.label_classificacao.grid(row=1, column=1)
-
-        self.label_jogos = tk.Label(self.frame_principal, text='JOGOS', height=3,
-                                    font='rockwell 13 bold', fg='#078745')
-        self.label_jogos.grid(row=1, column=4)
-
-        self.frame_classificacao = tk.Frame(self.frame_principal)
-        self.frame_classificacao.grid(row=2, column=1, sticky='N', padx=65)
-
-        self.frame_jogos = tk.Frame(self.frame_principal)
-        self.frame_jogos.grid(row=2, column=4, sticky='N', padx=65)
-
-        header = ['#', 'TIME', 'PG', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG']
-        rows = self.liga.numero_de_times + 1
-        columns = len(header)
-
-        self.tabela_de_classificacao = Table(self.frame_classificacao, rows=rows, columns=columns,
-                                             bg='gray91', font='arial 11', width=3, relief='flat', pady=4)
-
-        self.tabela_de_classificacao.config(column=1, width=25, anchor=tk.W, padx=5)
-        self.tabela_de_classificacao.config(row=0, bg='lightgrey', font='arial 11 bold')
-        self.tabela_de_classificacao.config(row=0, column=1, anchor=tk.CENTER)
-        self.tabela_de_classificacao.pack()
-
-        for c in range(columns):
-            self.tabela_de_classificacao.insert(0, c, header[c])
-
+        # Tabela de classificação
+        self.tabela_de_classificacao = self.carregar_tabela_de_classificacao()
         self.atualizar_tabela()
 
-        self.frame_header_rodada = tk.Frame(self.frame_jogos, bg='gray91')
-        self.frame_header_rodada.pack(fill=tk.X)
-
-        self.botao_rodada_anterior = tk.Button(self.frame_header_rodada, text='<', fg='#078745',
-                                               command=self.rodada_anterior, relief='flat', cursor='hand2',
-                                               bg='gray91', font='arial 12 bold')
-
-        self.botao_rodada_seguinte = tk.Button(self.frame_header_rodada, text='>', fg='#078745',
-                                               command=self.proxima_rodada, relief='flat', cursor='hand2',
-                                               bg='gray91', font='arial 12 bold')
-
-        self.botao_rodada_anterior.grid(row=0, column=0)
-        self.botao_rodada_seguinte.grid(row=0, column=2)
-
-        style = Style()
-        values = [f'{rodada.numero}ª RODADA' for rodada in self.liga.rodadas]
-        self.combobox_rodada = Combobox(self.frame_header_rodada, values=values, font='arial 11 bold', cursor='hand2',
-                                        width=36)
-        style.map('TCombobox', foreground=[('readonly', 'black')])
-        self.combobox_rodada.config(justify=tk.CENTER, state='readonly')
-        self.combobox_rodada.bind('<<ComboboxSelected>>', self.selecionar_rodada)
-        self.combobox_rodada.current(0)
-        self.combobox_rodada.grid(row=0, column=1, sticky='NSWE')
-        self.frame_jogos.option_add('*TCombobox*Listbox.selectBackground', '#078745')
-
-        self.tabela_de_jogos = Table(self.frame_jogos, rows=self.liga.jogos_por_rodada, columns=5, bg='gray99',
-                                     font='arial 11', border_x=0, pady=3, cursor='hand2')
-        self.tabela_de_jogos.config(column=2, text='x', width=2, padx=3, fg='grey')
-        self.tabela_de_jogos.config(column=0, width=17)
-        self.tabela_de_jogos.config(column=4, width=17)
-        self.tabela_de_jogos.config(column=1, width=3, font='arial 18 bold')
-        self.tabela_de_jogos.config(column=3, width=3, font='arial 18 bold')
-        self.tabela_de_jogos.pack()
-
+        # Tabela de jogos
         self.rodada_atual = self.liga.rodadas[0]
-
-        for i, jogo in enumerate(self.rodada_atual.jogos):
-            frame_time_mandante = tk.Frame(self.tabela_de_jogos.get_cell(i, 0),
-                                           width=17, bg='white', pady=5, padx=35)
-            frame_time_visitante = tk.Frame(self.tabela_de_jogos.get_cell(i, 4),
-                                            width=17, bg='white', pady=5, padx=35)
-            frame_time_mandante.pack()
-            frame_time_visitante.pack()
-
-            create_tool_tip(frame_time_mandante, jogo.time_mandante)
-            create_tool_tip(frame_time_visitante, jogo.time_visitante)
-
-            if jogo.time_mandante.emblema is not None:
-                emblema_time_mandante = ImageTk.PhotoImage(
-                    Image.open(jogo.time_mandante.emblema).resize((30, 30), Image.BILINEAR))
-            else:
-                emblema_time_mandante = self.emblema_padrao
-
-            if jogo.time_visitante.emblema is not None:
-                emblema_time_visitante = ImageTk.PhotoImage(
-                    Image.open(jogo.time_visitante.emblema).resize((30, 30), Image.BILINEAR))
-            else:
-                emblema_time_visitante = self.emblema_padrao
-
-            label_emblema_mandante = tk.Label(frame_time_mandante, image=emblema_time_mandante, bg='white')
-            label_emblema_mandante.img = emblema_time_mandante
-            label_time_mandante = tk.Label(frame_time_mandante, text=jogo.time_mandante.sigla, bg='white',
-                                           font='arial 12')
-            label_emblema_mandante.pack()
-            label_time_mandante.pack()
-
-            label_emblema_visitante = tk.Label(frame_time_visitante, image=emblema_time_visitante, bg='white')
-            label_emblema_visitante.img = emblema_time_visitante
-            label_time_visitante = tk.Label(frame_time_visitante, text=jogo.time_visitante.sigla, bg='white',
-                                            font='arial 12')
-            label_emblema_visitante.pack()
-            label_time_visitante.pack()
-
-            self.tabela_de_jogos.insert(i, 1, jogo.gols_time_mandante)
-            self.tabela_de_jogos.insert(i, 3, jogo.gols_time_visitante)
+        self.tabela_de_jogos, self.combobox_rodada = self.carregar_tabela_de_jogos()
+        self.mostrar_rodada()
 
         w = self.root.winfo_screenwidth()
         h = self.root.winfo_screenheight()
@@ -201,6 +103,93 @@ class GUILiga:
         self.root.state('zoomed')
 
         self.root.mainloop()
+
+    def carregar_menus(self):
+        pass
+
+    def carregar_tabela_de_classificacao(self):
+        label_classificacao = tk.Label(self.frame_principal, text='CLASSIFICAÇÃO',
+                                       height=3, font='rockwell 13 bold', fg='#078745')
+        label_classificacao.grid(row=1, column=1)
+
+        frame_classificacao = tk.Frame(self.frame_principal)
+        frame_classificacao.grid(row=2, column=1, sticky='N', padx=65)
+
+        header = ['#', 'TIME', 'PG', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG']
+        rows = self.liga.numero_de_times + 1
+        columns = len(header)
+
+        tabela_de_classificacao = Table(frame_classificacao, rows=rows, columns=columns,
+                                        bg='gray99', font='arial 11', width=3, relief='flat', pady=4)
+
+        tabela_de_classificacao.config(column=1, width=25, anchor=tk.W, padx=5)
+        tabela_de_classificacao.config(row=0, bg='lightgrey', font='arial 11 bold')
+        tabela_de_classificacao.config(row=0, column=1, anchor=tk.CENTER)
+        tabela_de_classificacao.pack()
+
+        for c in range(columns):
+            tabela_de_classificacao.insert(0, c, header[c])
+
+        return tabela_de_classificacao
+
+    def carregar_tabela_de_jogos(self):
+        label_jogos = tk.Label(self.frame_principal, text='JOGOS', height=3,
+                               font='rockwell 13 bold', fg='#078745')
+
+        label_jogos.grid(row=1, column=4)
+
+        frame_jogos = tk.Frame(self.frame_principal)
+        frame_jogos.grid(row=2, column=4, sticky='N', padx=65)
+
+        frame_header_rodada = tk.Frame(frame_jogos, bg='gray91')
+        frame_header_rodada.pack(fill=tk.X)
+
+        botao_rodada_anterior = tk.Button(frame_header_rodada, text='<', fg='#078745', command=self.rodada_anterior,
+                                          relief='flat', cursor='hand2', bg='gray91', font='arial 12 bold')
+
+        botao_rodada_seguinte = tk.Button(frame_header_rodada, text='>', fg='#078745', command=self.proxima_rodada,
+                                          relief='flat', cursor='hand2', bg='gray91', font='arial 12 bold')
+
+        botao_rodada_anterior.grid(row=0, column=0)
+        botao_rodada_seguinte.grid(row=0, column=2)
+
+        style = Style()
+        values = [f'{rodada.numero}ª RODADA' for rodada in self.liga.rodadas]
+        combobox_rodada = Combobox(frame_header_rodada, values=values, font='arial 11 bold', cursor='hand2',
+                                   width=34)
+        style.map('TCombobox', foreground=[('readonly', 'black')])
+        combobox_rodada.config(justify=tk.CENTER, state='readonly')
+        combobox_rodada.bind('<<ComboboxSelected>>', self.selecionar_rodada)
+        combobox_rodada.current(0)
+        combobox_rodada.grid(row=0, column=1, sticky='NSWE')
+        frame_jogos.option_add('*TCombobox*Listbox.selectBackground', '#078745')
+
+        tabela_de_jogos = Table(frame_jogos, rows=self.liga.jogos_por_rodada, columns=5, bg='gray99',
+                                font='arial 11', border_x=0, pady=3, cursor='hand2')
+        tabela_de_jogos.config(column=2, text='x', width=2, fg='grey')
+        tabela_de_jogos.config(column=0)
+        tabela_de_jogos.config(column=4)
+        tabela_de_jogos.config(column=1, width=3, font='arial 18 bold')
+        tabela_de_jogos.config(column=3, width=3, font='arial 18 bold')
+        tabela_de_jogos.pack()
+
+        for i in range(self.liga.jogos_por_rodada):
+            frame_time_mandante = tk.Frame(tabela_de_jogos.get_cell(i, 0), bg='gray99', pady=5, padx=35)
+            frame_time_visitante = tk.Frame(tabela_de_jogos.get_cell(i, 4), bg='gray99', pady=5, padx=35)
+            frame_time_mandante.pack()
+            frame_time_visitante.pack()
+
+            label_emblema_mandante = tk.Label(frame_time_mandante, bg='gray99')
+            label_time_mandante = tk.Label(frame_time_mandante, bg='gray99', font='arial 12', width=3)
+            label_emblema_mandante.pack()
+            label_time_mandante.pack()
+
+            label_emblema_visitante = tk.Label(frame_time_visitante, bg='gray99')
+            label_time_visitante = tk.Label(frame_time_visitante, bg='gray99', font='arial 12', width=3)
+            label_emblema_visitante.pack()
+            label_time_visitante.pack()
+
+        return tabela_de_jogos, combobox_rodada
 
     def atualizar_tabela(self):
         for i, time in enumerate(self.liga.classificacao):
@@ -222,9 +211,9 @@ class GUILiga:
             else:
                 emblema = self.emblema_padrao
 
-            label_emblema = tk.Label(frame_time, image=emblema, bg='gray91')
+            label_emblema = tk.Label(frame_time, image=emblema, bg='gray99')
             label_emblema.img = emblema
-            label_nome = tk.Label(frame_time, text=time.nome, bg='gray91', font='arial 11')
+            label_nome = tk.Label(frame_time, text=time.nome, bg='gray99', font='arial 11')
             label_emblema.pack(side=tk.LEFT, fill=tk.BOTH)
             label_nome.pack(side=tk.LEFT, fill=tk.BOTH)
 

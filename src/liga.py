@@ -57,7 +57,7 @@ class Liga:
                     jogo.time_mandante, jogo.time_visitante = jogo.time_visitante, jogo.time_mandante
 
         else:
-            print("Não há times suficientes")
+            raise Exception("Não há times suficientes")
 
     def atualizar_classificacao(self):
         cmp = self.criterio
