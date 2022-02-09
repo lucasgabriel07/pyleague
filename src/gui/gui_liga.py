@@ -17,16 +17,16 @@ class GUILiga:
         self.frame_header = tk.Frame(self.root, bg='#078745')
         self.frame_header.pack(fill=tk.X)
 
-        self.menu_icon = tk.PhotoImage(file='../assets/menu.png')
-        self.edit_icon = tk.PhotoImage(file='../assets/edit.png')
-        self.back_icon = tk.PhotoImage(file='../assets/back.png')
-        self.exit_icon = tk.PhotoImage(file='../assets/exit.png')
-        self.delete_icon = tk.PhotoImage(file='../assets/delete.png')
-        self.arrows_icon = tk.PhotoImage(file='../assets/arrows.png')
-        self.cup_icon = tk.PhotoImage(file='../assets/cup.png')
-        self.team_icon = tk.PhotoImage(file='../assets/team.png')
-        self.reset_icon = tk.PhotoImage(file='../assets/reset.png')
-        self.emblema_padrao = ImageTk.PhotoImage(Image.open('../assets/emblemas/emblema.png').resize((30, 30),
+        self.menu_icon = tk.PhotoImage(file='assets/menu.png')
+        self.edit_icon = tk.PhotoImage(file='assets/edit.png')
+        self.back_icon = tk.PhotoImage(file='assets/back.png')
+        self.exit_icon = tk.PhotoImage(file='assets/exit.png')
+        self.delete_icon = tk.PhotoImage(file='assets/delete.png')
+        self.arrows_icon = tk.PhotoImage(file='assets/arrows.png')
+        self.cup_icon = tk.PhotoImage(file='assets/cup.png')
+        self.team_icon = tk.PhotoImage(file='assets/team.png')
+        self.reset_icon = tk.PhotoImage(file='assets/reset.png')
+        self.emblema_padrao = ImageTk.PhotoImage(Image.open('assets/emblemas/emblema.png').resize((30, 30),
                                                  Image.BILINEAR))
 
         self.menu_button = tk.Menubutton(self.frame_header, image=self.menu_icon, bg='#078745', bd=0,
