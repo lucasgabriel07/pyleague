@@ -4,6 +4,7 @@ from tkinter import *
 class AutoHideScrollbar(Scrollbar):
 
     def set(self, lo, hi):
+        # print(lo, hi, sep='\t')
         if float(lo) <= 0.0 and float(hi) >= 1.0:
             self.pack_forget()
             self.place_forget()

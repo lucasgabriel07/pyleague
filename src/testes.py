@@ -1,7 +1,7 @@
 from liga import Liga
 from team import Time
 from random import randint
-from gui.gui_liga import GUILiga
+from gui.gui_liga import GuiLiga
 
 
 if __name__ == '__main__':
@@ -17,14 +17,6 @@ if __name__ == '__main__':
     liga.iniciar_liga()
 
     for rodada in liga.rodadas:
-        # print(f'{rodada.numero}ª Rodada:')
         for jogo in rodada.jogos:
             jogo.definir_placar(randint(0, 5), randint(0, 5))
-            # print(jogo)
         liga.atualizar_classificacao()
-        # print()
-        # for time in liga.classificacao:
-            # print(time)
-        # print()
-
-    GUILiga(liga)

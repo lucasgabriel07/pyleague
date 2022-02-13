@@ -1,13 +1,13 @@
 from rodada import Rodada
 from jogo import Jogo
 from random import shuffle
-from criterio_factory import CriterioFactory
-from gui.gui_liga import GUILiga
+from gui.gui_liga import GuiLiga
 from src.team import Time
+import criterio_factory as cf
+from src import database as db
 
 
 class Liga:
-
     def __init__(self, nome, numero_de_turnos, index_criterio):
         self.nome = nome
         self.numero_de_turnos = numero_de_turnos
@@ -18,7 +18,8 @@ class Liga:
         self.numero_de_rodadas = 0
         self.rodadas_por_turno = 0
         self.jogos_por_rodada = 0
-        self.criterio = CriterioFactory.definir_criterio(index_criterio)
+        self.index_criterio = index_criterio
+        self.criterio = cf.definir_criterio(index_criterio)
 
     def adicionar_time(self, time):
         self.times.append(time)
@@ -26,12 +27,21 @@ class Liga:
         self.numero_de_times += 1
 
     def iniciar_liga(self):
-        self.classificacao = sorted(self.times, key=lambda time: time.nome)
+        self.classificacao = self.times[:]
         self.rodadas_por_turno = self.numero_de_times - 1 + self.numero_de_times % 2
         self.numero_de_rodadas = self.numero_de_turnos * self.rodadas_por_turno
         self.jogos_por_rodada = self.numero_de_times // 2
         self.gerar_rodadas()
-        GUILiga(self)
+        db.create_database(self)
+        GuiLiga(self)
+
+    def carregar_liga(self):
+        self.classificacao = self.times[:]
+        self.atualizar_classificacao()
+        self.rodadas_por_turno = self.numero_de_times - 1 + self.numero_de_times % 2
+        self.numero_de_rodadas = self.numero_de_turnos * self.rodadas_por_turno
+        self.jogos_por_rodada = self.numero_de_times // 2
+        GuiLiga(self)
 
     def gerar_rodadas(self):
         if self.numero_de_times > 1:
@@ -47,12 +57,12 @@ class Liga:
             shuffle(self.times)
 
             for i in range(self.rodadas_por_turno):
-                rodada = Rodada(i + 1)
+                rodada = Rodada(i+1)
                 for j in range(self.jogos_por_rodada + self.numero_de_times % 2):
                     time_mandante = self.times[j]
-                    time_visitante = self.times[-j - 1]
+                    time_visitante = self.times[-j-1]
                     if time_mandante != time_auxiliar and time_visitante != time_auxiliar:
-                        jogo = Jogo(time_mandante, time_visitante)
+                        jogo = Jogo(time_mandante, time_visitante, j+1)
                         rodada.adicionar_jogo(jogo)
                 self.times.insert(1, self.times.pop())
                 self.rodadas.append(rodada)
@@ -72,8 +82,8 @@ class Liga:
                 for r in range(self.rodadas_por_turno):
                     rodada_turno = self.rodadas[r]
                     rodada_returno = Rodada(self.rodadas_por_turno + r + 1)
-                    for jogo_turno in rodada_turno.jogos:
-                        jogo_returno = Jogo(jogo_turno.time_visitante, jogo_turno.time_mandante)
+                    for j, jogo_turno in enumerate(rodada_turno.jogos):
+                        jogo_returno = Jogo(jogo_turno.time_visitante, jogo_turno.time_mandante, j+1)
                         rodada_returno.adicionar_jogo(jogo_returno)
                     self.rodadas.append(rodada_returno)
 
@@ -83,6 +93,9 @@ class Liga:
 
         else:
             raise Exception("Não há times suficientes")
+
+    def adicionar_rodada(self, rodada):
+        self.rodadas.append(rodada)
 
     def atualizar_classificacao(self):
         cmp = self.criterio

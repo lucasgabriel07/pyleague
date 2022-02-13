@@ -51,6 +51,25 @@ class Time:
     def adicionar_punicao(self, pontos_perdidos):
         self.pontos -= pontos_perdidos
 
+    def resetar_vitoria(self):
+        self.pontos -= 3
+        self.vitorias -= 1
+        self.jogos -= 1
+
+    def resetar_empate(self):
+        self.pontos -= 1
+        self.empates -= 1
+        self.jogos -= 1
+
+    def resetar_derrota(self):
+        self.derrotas -= 1
+        self.jogos -= 1
+
+    def resetar_gols(self, gols_feitos, gols_sofridos):
+        self.gols_feitos -= gols_feitos
+        self.gols_sofridos -= gols_sofridos
+        self.saldo_de_gols = self.gols_feitos - self.gols_sofridos
+
     def __eq__(self, other):
         return self.nome == other.nome
 
