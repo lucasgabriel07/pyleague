@@ -103,3 +103,6 @@ class Liga:
             for j in range(i + 1, self.numero_de_times):
                 if cmp(self.classificacao[i], self.classificacao[j]) < 0:
                     self.classificacao[i], self.classificacao[j] = self.classificacao[j], self.classificacao[i]
+
+    def get_rodada(self, index):
+        return self.rodadas[index]

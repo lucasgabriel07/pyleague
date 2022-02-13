@@ -122,11 +122,20 @@ def get_ligas():
     else:
         data = cursor.fetchall()
         if len(data) > 0:
-            ligas = data[0]
+            ligas = [d[0] for d in data]
         else:
             ligas = None
     conn.close()
     return ligas
+
+
+def get_times(nome_da_liga):
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute('SELECT nome, sigla, emblema FROM Times WHERE nome_liga=(?)', (nome_da_liga,))
+    data = cursor.fetchall()
+    conn.close()
+    return data
 
 
 def carregar_liga(nome_da_liga):
@@ -141,7 +150,7 @@ def carregar_liga(nome_da_liga):
 
     liga = Liga(nome, numero_de_turnos, index_criterio)
 
-    cursor.execute('SELECT nome, sigla, emblema FROM Times')
+    cursor.execute('SELECT nome, sigla, emblema FROM Times WHERE nome_liga=(?)', (nome_da_liga,))
     data_times = cursor.fetchall()
 
     dict_times = {}
@@ -149,8 +158,7 @@ def carregar_liga(nome_da_liga):
     for data_time in data_times:
         nome, sigla, emblema = data_time
 
-        time = Time(nome, sigla)
-        time.emblema = emblema
+        time = Time(nome, sigla, emblema)
         liga.adicionar_time(time)
         dict_times[nome] = time
 

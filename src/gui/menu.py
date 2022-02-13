@@ -152,12 +152,26 @@ class NovaLiga:
         Menu(x, y)
 
     def confirmar(self, event=None):
-        nome_da_liga = self.entry.get()
-        numero_de_turnos = int(self.spinbox_turnos.get())
-        criterio_de_classificacao = self.combobox_criterios.current()
-        self.root.destroy()
-        liga = Liga(nome_da_liga, numero_de_turnos, criterio_de_classificacao)
-        AdicionaTimes(liga)
+        nome_da_liga = self.entry.get().strip()
+
+        if self.liga_existe(nome_da_liga):
+            messagebox.showerror(message='Já existe uma liga com esse nome!')
+        elif nome_da_liga != '':
+            numero_de_turnos = int(self.spinbox_turnos.get())
+            criterio_de_classificacao = self.combobox_criterios.current()
+            self.root.destroy()
+            liga = Liga(nome_da_liga, numero_de_turnos, criterio_de_classificacao)
+            AdicionaTimes(liga)
+        else:
+            messagebox.showerror(message='Entrada inválida!')
+
+    @staticmethod
+    def liga_existe(nome):
+        ligas_existentes = db.get_ligas()
+        for liga in ligas_existentes:
+            if nome.upper() == liga.upper():
+                return True
+        return False
 
 
 class AdicionaTimes:
@@ -199,17 +213,17 @@ class AdicionaTimes:
         self.botao_add.grid(row=0, column=3, padx=3)
 
         self.botao_importar = tk.Button(self.frame, bg='white', bd=1, text='Importar', width=8, cursor='hand2',
-                                        command=None)
+                                        command=self.chamar_janela_importar_times)
         self.botao_importar.grid(row=2, column=0, columnspan=3, pady=10)
 
-        self.listbox = tk.Listbox(self.frame, bg='white', font='arial 12', selectbackground='#078745',
-                                  cursor='hand2')
-        self.scrollbar = tk.Scrollbar(self.frame, orient=tk.VERTICAL, command=self.listbox.yview)
-        self.listbox.configure(yscrollcommand=self.scrollbar.set)
-        self.listbox.bind('<Delete>', self.remover_time)
-        self.listbox.focus_force()
+        self.listbox_times = tk.Listbox(self.frame, bg='white', font='arial 12', selectbackground='#078745',
+                                        cursor='hand2')
+        self.scrollbar = tk.Scrollbar(self.frame, orient=tk.VERTICAL, command=self.listbox_times.yview)
+        self.listbox_times.configure(yscrollcommand=self.scrollbar.set)
+        self.listbox_times.bind('<Delete>', self.remover_time)
+        self.listbox_times.focus_force()
 
-        self.listbox.grid(row=3, column=0, columnspan=4, sticky='WE')
+        self.listbox_times.grid(row=3, column=0, columnspan=4, sticky='WE')
         self.scrollbar.grid(row=3, column=4, sticky='NS')
 
         self.botao_voltar = tk.Button(self.frame_botoes, bg='white', bd=1, text='Voltar', command=self.voltar, width=8,
@@ -250,31 +264,97 @@ class AdicionaTimes:
         else:
             self.lista_de_times.append({
                 'nome': self.entry_nome.get(),
-                'sigla': self.entry_sigla.get()[:3]
+                'sigla': self.entry_sigla.get()[:3],
+                'emblema': None
             })
             i = len(self.lista_de_times)
-            self.listbox.insert('end', f'Time {i}: {nome} ({sigla})')
-            self.listbox.yview('end')
+            self.listbox_times.insert('end', f'Time {i}: {nome} ({sigla})')
+            self.listbox_times.yview('end')
             self.entry_nome.delete(0, 'end')
             self.entry_sigla.delete(0, 'end')
             self.entry_nome.focus()
 
     def remover_time(self, event=None):
-        index = self.listbox.curselection()[0]
+        index = self.listbox_times.curselection()[0]
         del self.lista_de_times[index]
-        self.listbox.delete(0, 'end')
+        self.listbox_times.delete(0, 'end')
 
         for i, item in enumerate(self.lista_de_times):
             nome = item['nome']
             sigla = item['sigla']
-            self.listbox.insert('end', f'TIME {i+1}: {nome} ({sigla})')
-        self.listbox.yview(index)
+            self.listbox_times.insert('end', f'TIME {i + 1}: {nome} ({sigla})')
+        self.listbox_times.yview(index)
+
+    def chamar_janela_importar_times(self, event=None):
+        window = tk.Tk()
+        window.title('Importar times')
+
+        frame0 = tk.Frame(window)
+        frame0.pack(pady=15)
+
+        listbox_ligas = tk.Listbox(frame0, bg='white', font='arial 12', selectbackground='#078745', height=7,
+                                   width=37, cursor='hand2')
+        scrollbar = tk.Scrollbar(frame0, orient=tk.VERTICAL, command=listbox_ligas.yview)
+        listbox_ligas.configure(yscrollcommand=scrollbar.set)
+        listbox_ligas.bind('<Double-Button-1>', lambda e: self.importar_times(listbox_ligas, window))
+        listbox_ligas.bind('<Return>', lambda e: self.importar_times(listbox_ligas, window))
+
+        listbox_ligas.grid(row=0, column=0, sticky='WE')
+        scrollbar.grid(row=0, column=1, sticky='NS')
+
+        frame_botoes = tk.Frame(window)
+        frame_botoes.pack()
+
+        botao_cancelar = tk.Button(frame_botoes, bg='white', bd=1, text='Cancelar', width=8, cursor='hand2',
+                                   command=window.destroy)
+        botao_confirmar = tk.Button(frame_botoes, bg='white', bd=1, text='Confirmar', width=8, cursor='hand2',
+                                    command=lambda: self.importar_times(listbox_ligas, window))
+        botao_cancelar.pack(side=tk.LEFT, padx=5)
+        botao_confirmar.pack(side=tk.LEFT, padx=5)
+
+        lista_de_ligas = db.get_ligas()
+
+        for nome in lista_de_ligas:
+            listbox_ligas.insert('end', nome)
+
+        x = (window.winfo_screenwidth() - 420) // 2
+        y = (window.winfo_screenheight() - 350) // 2
+        window.geometry(f'420x215+{x}+{y}')
+        window.mainloop()
+
+    def importar_times(self, listbox_ligas, window, event=None):
+        nome_da_liga = listbox_ligas.selection_get()
+        times_importados = db.get_times(nome_da_liga)
+        times_atuais = [item['nome'] for item in self.lista_de_times]
+
+        times_repetidos = []
+        for nome, sigla, emblema in times_importados:
+            if nome not in times_atuais:
+                self.lista_de_times.append({
+                    'nome': nome,
+                    'sigla': sigla,
+                    'emblema': emblema
+                })
+                i = len(self.lista_de_times)
+                self.listbox_times.insert('end', f'Time {i}: {nome} ({sigla})')
+                self.listbox_times.yview('end')
+            else:
+                times_repetidos.append(nome)
+
+        if len(times_repetidos) > 0:
+            text = 'Os seguintes times já estavam cadastrados:\n'
+            for team in times_repetidos:
+                text += f'\n    - {team}'
+            messagebox.showerror('Times repetidos', text)
+
+        window.destroy()
 
     def confirmar(self, event=None):
         for item in self.lista_de_times:
             nome = item['nome']
             sigla = item['sigla']
-            time = Time(nome, sigla)
+            emblema = item['emblema']
+            time = Time(nome, sigla, emblema)
             self.liga.adicionar_time(time)
 
         self.root.destroy()
@@ -345,3 +425,51 @@ class CarregaLiga:
         y = self.root.winfo_y()
         self.root.destroy()
         Menu(x, y)
+
+
+class ImportaTimes:
+
+    def __init__(self, listbox_times):
+
+        self.listbox_times = listbox_times
+        self.root = tk.Tk()
+        self.root.title('Importar times')
+
+        self.frame0 = tk.Frame(self.root)
+        self.frame0.pack(pady=15)
+
+        self.listbox_ligas = tk.Listbox(self.frame0, bg='white', font='arial 12', selectbackground='#078745', height=7,
+                                        width=37, cursor='hand2')
+        self.scrollbar = tk.Scrollbar(self.frame0, orient=tk.VERTICAL, command=self.listbox_ligas.yview)
+        self.listbox_ligas.configure(yscrollcommand=self.scrollbar.set)
+        self.listbox_ligas.bind('<Double-Button-1>', self.confirmar)
+        self.listbox_ligas.bind('<Return>', self.confirmar)
+
+        self.listbox_ligas.grid(row=0, column=0, sticky='WE')
+        self.scrollbar.grid(row=0, column=1, sticky='NS')
+
+        self.frame_botoes = tk.Frame(self.root)
+        self.frame_botoes.pack()
+
+        self.botao_cancelar = tk.Button(self.frame_botoes, bg='white', bd=1, text='Cancelar',
+                                        command=self.root.destroy, width=8, cursor='hand2')
+        self.botao_confirmar = tk.Button(self.frame_botoes, bg='white', bd=1, text='Confirmar',
+                                         command=self.confirmar, width=8, cursor='hand2')
+        self.botao_cancelar.pack(side=tk.LEFT, padx=5)
+        self.botao_confirmar.pack(side=tk.LEFT, padx=5)
+
+        self.lista_de_ligas = db.get_ligas()
+
+        for nome in self.lista_de_ligas:
+            self.listbox_ligas.insert('end', nome)
+
+        x = (self.root.winfo_screenwidth() - 420) // 2
+        y = (self.root.winfo_screenheight() - 350) // 2
+        self.root.geometry(f'420x215+{x}+{y}')
+        self.root.mainloop()
+
+    def confirmar(self, event=None):
+        pass
+
+    def cancelar(self, event=None):
+        pass

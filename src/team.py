@@ -1,9 +1,9 @@
 class Time:
 
-    def __init__(self, nome, sigla):
+    def __init__(self, nome, sigla, emblema=None):
         self.nome = nome
         self.sigla = sigla
-        self.emblema = None
+        self.emblema = emblema
         self.jogadores = []
         self.pontos = 0
         self.jogos = 0

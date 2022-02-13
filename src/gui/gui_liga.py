@@ -22,7 +22,7 @@ class GuiLiga:
         self.frame_header = tk.Frame(self.root, bg='#078745')
         self.frame_header.pack(fill=tk.X)
 
-        self.icone_menu = tk.PhotoImage(file='assets/menu.png')
+        self.icone_menu = tk.PhotoImage(file='assets/icones/menu.png')
         self.icone_editar = tk.PhotoImage(file='assets/icones/edit.png')
         self.icone_voltar = tk.PhotoImage(file='assets/icones/back.png')
         self.icone_sair = tk.PhotoImage(file='assets/icones/exit.png')
@@ -99,7 +99,7 @@ class GuiLiga:
         self.atualizar_tabela()
 
         # Tabela de jogos
-        self.rodada_atual = self.liga.rodadas[0]
+        self.rodada_atual = self.definir_rodada_atual()
         self.tabela_de_jogos, self.combobox_rodada = self.carregar_tabela_de_jogos()
         self.mostrar_rodada()
 
@@ -214,7 +214,8 @@ class GuiLiga:
         return tabela_de_jogos, combobox_rodada
 
     def scroll(self, event):
-        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        if self.yscrollbar.winfo_ismapped():
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def atualizar_tabela(self):
         for i, time in enumerate(self.liga.classificacao):
@@ -245,18 +246,18 @@ class GuiLiga:
     def proxima_rodada(self):
         index = self.rodada_atual.numero
         if index < self.liga.numero_de_rodadas:
-            self.rodada_atual = self.liga.rodadas[index]
+            self.rodada_atual = self.liga.get_rodada(index)
             self.mostrar_rodada()
 
     def rodada_anterior(self):
         index = self.rodada_atual.numero - 2
         if index >= 0:
-            self.rodada_atual = self.liga.rodadas[index]
+            self.rodada_atual = self.liga.get_rodada(index)
             self.mostrar_rodada()
 
     def selecionar_rodada(self, event):
         index = self.combobox_rodada.current()
-        self.rodada_atual = self.liga.rodadas[index]
+        self.rodada_atual = self.liga.get_rodada(index)
         self.mostrar_rodada()
         self.root.focus()
 
@@ -325,6 +326,13 @@ class GuiLiga:
             entry_placar_mandante.config(textvariable=sv_mandante)
             entry_placar_visitante.config(textvariable=sv_visitante)
 
+    def definir_rodada_atual(self):
+        for rodada in self.liga.rodadas:
+            for jogo in rodada.jogos:
+                if jogo.gols_time_mandante == '':
+                    return rodada
+        return self.liga.get_rodada(0)
+
     def editar_placar(self, gols_mandante, gols_visitante, index):
         jogo = self.rodada_atual.get_jogo(index)
         jogo.resetar()
@@ -339,7 +347,7 @@ class GuiLiga:
         self.atualizar_tabela()
         db.update_resultado(self.liga.nome, self.rodada_atual.numero, jogo)
 
-    def renomear_liga(self):
+    def renomear_liga(self, event=None):
         nome_antigo = self.liga.nome
         nome_novo = self.config.entry_nome.get()
         if nome_novo == self.liga.nome or f'{nome_novo}.db' not in os.listdir('data'):
@@ -363,7 +371,7 @@ class GuiLiga:
         for rodada in self.liga.rodadas:
             rodada.resetar()
         self.atualizar_tabela()
-        self.rodada_atual = self.liga.rodadas[0]
+        self.rodada_atual = self.liga.get_rodada(0)
         self.mostrar_rodada()
         db.resetar_liga(self.liga.nome)
 
@@ -379,5 +387,5 @@ class GuiLiga:
                 jogo.definir_placar(randint(0, 5), randint(0, 5))
         self.liga.atualizar_classificacao()
         self.atualizar_tabela()
-        self.rodada_atual = self.liga.rodadas[0]
+        self.rodada_atual = self.liga.get_rodada(0)
         self.mostrar_rodada()
