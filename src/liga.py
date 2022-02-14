@@ -5,6 +5,7 @@ from gui.gui_liga import GuiLiga
 from src.team import Time
 import criterio_factory as cf
 from src import database as db
+import insert_sort
 
 
 class Liga:
@@ -98,11 +99,7 @@ class Liga:
         self.rodadas.append(rodada)
 
     def atualizar_classificacao(self):
-        cmp = self.criterio
-        for i in range(self.numero_de_times):
-            for j in range(i + 1, self.numero_de_times):
-                if cmp(self.classificacao[i], self.classificacao[j]) < 0:
-                    self.classificacao[i], self.classificacao[j] = self.classificacao[j], self.classificacao[i]
+        self.classificacao = insert_sort.sort(self.classificacao, self.criterio)
 
     def get_rodada(self, index):
         return self.rodadas[index]

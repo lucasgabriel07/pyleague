@@ -167,6 +167,8 @@ class NovaLiga:
 
     @staticmethod
     def liga_existe(nome):
+        if len(os.listdir('data')) == 0 or db.get_ligas() is None:
+            return False
         ligas_existentes = db.get_ligas()
         for liga in ligas_existentes:
             if nome.upper() == liga.upper():
@@ -215,6 +217,11 @@ class AdicionaTimes:
         self.botao_importar = tk.Button(self.frame, bg='white', bd=1, text='Importar', width=8, cursor='hand2',
                                         command=self.chamar_janela_importar_times)
         self.botao_importar.grid(row=2, column=0, columnspan=3, pady=10)
+
+        if len(os.listdir('data')) == 0 or db.get_ligas() is None:
+            self.botao_importar.config(state='disabled', cursor='arrow')
+        else:
+            self.botao_importar.config(state='normal', cursor='hand2')
 
         self.listbox_times = tk.Listbox(self.frame, bg='white', font='arial 12', selectbackground='#078745',
                                         cursor='hand2')

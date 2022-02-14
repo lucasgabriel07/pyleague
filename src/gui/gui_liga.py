@@ -32,7 +32,7 @@ class GuiLiga:
         self.icone_time = tk.PhotoImage(file='assets/icones/team.png')
         self.icone_reset = tk.PhotoImage(file='assets/icones/reset.png')
         self.emblema_padrao = ImageTk.PhotoImage(Image.open('assets/emblemas/emblema_padrao.png').resize((30, 30),
-                                                 Image.BILINEAR))
+                                                                                                         Image.BILINEAR))
 
         # Menus
 
@@ -100,7 +100,7 @@ class GuiLiga:
 
         # Tabela de jogos
         self.rodada_atual = self.definir_rodada_atual()
-        self.tabela_de_jogos, self.combobox_rodada = self.carregar_tabela_de_jogos()
+        self.tabela_de_jogos, self.combobox_rodada, self.label_msg = self.carregar_tabela_de_jogos()
         self.mostrar_rodada()
 
         w = self.root.winfo_screenwidth()
@@ -190,6 +190,9 @@ class GuiLiga:
         tabela_de_jogos.config(column=4)
         tabela_de_jogos.pack()
 
+        label_msg = tk.Label(frame_jogos, font='arial 12 bold')
+        label_msg.pack(pady=30)
+
         for i in range(self.liga.jogos_por_rodada):
             frame_time_mandante = tk.Frame(tabela_de_jogos.get_cell(i, 0), bg='gray99', pady=5, padx=10)
             frame_time_visitante = tk.Frame(tabela_de_jogos.get_cell(i, 4), bg='gray99', pady=5, padx=10)
@@ -211,7 +214,7 @@ class GuiLiga:
             frame_placar_mandante.pack(fill=tk.Y)
             frame_placar_visitante.pack(fill=tk.Y)
 
-        return tabela_de_jogos, combobox_rodada
+        return tabela_de_jogos, combobox_rodada, label_msg
 
     def scroll(self, event):
         if self.yscrollbar.winfo_ismapped():
@@ -321,7 +324,7 @@ class GuiLiga:
 
             for sv in (sv_mandante, sv_visitante):
                 sv.trace('w', lambda name, index, mode, sv1=sv_mandante, sv2=sv_visitante,
-                         index_jogo=i: self.editar_placar(sv1.get(), sv2.get(), index_jogo))
+                                     index_jogo=i: self.editar_placar(sv1.get(), sv2.get(), index_jogo))
 
             entry_placar_mandante.config(textvariable=sv_mandante)
             entry_placar_visitante.config(textvariable=sv_visitante)
@@ -343,9 +346,13 @@ class GuiLiga:
             pass
         else:
             jogo.definir_placar(gols_mandante, gols_visitante)
+
+        self.label_msg.config(text='Salvando... ⌛', fg='gray')
         self.liga.atualizar_classificacao()
         self.atualizar_tabela()
         db.update_resultado(self.liga.nome, self.rodada_atual.numero, jogo)
+        self.label_msg.after(500, lambda: self.label_msg.config(text='Salvo automaticamente ✔️', fg='green'))
+        self.label_msg.after(2500, lambda: self.label_msg.config(text=''))
 
     def renomear_liga(self, event=None):
         nome_antigo = self.liga.nome
