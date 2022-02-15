@@ -7,7 +7,7 @@ from lib.auto_hide_scrollbar import AutoHideScrollbar
 from PIL import Image, ImageTk
 from lib.tooltip import create_tool_tip
 from tkinter.ttk import Combobox, Style
-from src.gui.configuracoes import Configuracoes
+from src.gui.configuracoes import Configuracoes, AdicionaHighlights
 import src.database as db
 
 
@@ -31,8 +31,6 @@ class GuiLiga:
         self.icone_copa = tk.PhotoImage(file='assets/icones/cup.png')
         self.icone_time = tk.PhotoImage(file='assets/icones/team.png')
         self.icone_reset = tk.PhotoImage(file='assets/icones/reset.png')
-        self.emblema_padrao = ImageTk.PhotoImage(Image.open('assets/emblemas/emblema_padrao.png').resize((30, 30),
-                                                                                                         Image.BILINEAR))
 
         # Menus
 
@@ -45,23 +43,25 @@ class GuiLiga:
 
         self.menu_times = tk.Menu(self.menu, tearoff=0, bg='white', activebackground='#078745')
 
-        for i, team in enumerate(self.liga.times):
-            self.menu_times.add_command(label=team.nome, compound='left', font='arial 10', command=None)
+        for i, time in enumerate(self.liga.times):
+            emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
+            label = tk.Label()
+            label.img = emblema
+            self.menu_times.add_command(label=time.nome, image=label.img, compound='left', font='arial 10',
+                                        command=None)
 
         self.config = Configuracoes(self.liga, self)
 
         self.menu_editar = tk.Menu(self.menu, tearoff=0, bg='white', activebackground='#078745')
         self.menu_editar.add_command(label='Renomear Liga', image=self.icone_copa, compound='left', font='arial 10',
                                      command=self.config.abrir_janela_renomear_liga)
-        self.menu_editar.add_command(label='Promoção/Rebaixamento', image=self.icone_setas, compound='left',
-                                     font='arial 10', command=None)
+        self.menu_editar.add_command(label='Classificação/Rebaixamento', image=self.icone_setas, compound='left',
+                                     font='arial 10', command=lambda: AdicionaHighlights(self.liga, self))
         self.menu_editar.add_command(label='Resetar Liga', image=self.icone_reset, compound='left', font='arial 10',
                                      command=self.resetar_liga)
         self.menu_editar.add_command(label='Excluir Liga', image=self.icone_deletar, compound='left', font='arial 10',
                                      command=self.excluir_liga)
 
-        self.menu.add_command(label='Tabela de Jogos', image=self.icone_copa, compound='left', font='arial 10',
-                              command=None)
         self.menu.add_cascade(label='Times', image=self.icone_time, compound='left', font='arial 10',
                               menu=self.menu_times)
         self.menu.add_cascade(label='Editar', image=self.icone_editar, compound='left', font='arial 10',
@@ -71,7 +71,7 @@ class GuiLiga:
         self.menu.add_command(label='Sair', image=self.icone_sair, compound='left', font='arial 10',
                               command=self.root.destroy)
 
-        self.menu.insert_separator(4)
+        self.menu.insert_separator(3)
 
         self.header = tk.Label(self.frame_header, text=self.liga.nome.upper(), bg='#078745',
                                fg='white', font='rockwell 20 bold', pady=5)
@@ -97,6 +97,7 @@ class GuiLiga:
         # Tabela de classificação
         self.tabela_de_classificacao = self.carregar_tabela_de_classificacao()
         self.atualizar_tabela()
+        self.atualizar_highlights()
 
         # Tabela de jogos
         self.rodada_atual = self.definir_rodada_atual()
@@ -190,7 +191,7 @@ class GuiLiga:
         tabela_de_jogos.config(column=4)
         tabela_de_jogos.pack()
 
-        label_msg = tk.Label(frame_jogos, font='arial 12 bold')
+        label_msg = tk.Label(frame_jogos, font='arial 11 bold')
         label_msg.pack(pady=30)
 
         for i in range(self.liga.jogos_por_rodada):
@@ -235,10 +236,7 @@ class GuiLiga:
             celula = self.tabela_de_classificacao.get_cell(i+1, 1)
             frame_time = celula.winfo_children()[0]
 
-            if time.emblema is not None:
-                emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
-            else:
-                emblema = self.emblema_padrao
+            emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
 
             label_emblema = frame_time.winfo_children()[0]
             label_emblema.config(image=emblema)
@@ -282,17 +280,11 @@ class GuiLiga:
             create_tool_tip(frame_time_mandante, jogo.time_mandante)
             create_tool_tip(frame_time_visitante, jogo.time_visitante)
 
-            if jogo.time_mandante.emblema is not None:
-                emblema_time_mandante = ImageTk.PhotoImage(
-                    Image.open(jogo.time_mandante.emblema).resize((30, 30), Image.BILINEAR))
-            else:
-                emblema_time_mandante = self.emblema_padrao
+            emblema_time_mandante = ImageTk.PhotoImage(Image.open(jogo.time_mandante.emblema).resize((30, 30),
+                                                                                                     Image.BILINEAR))
 
-            if jogo.time_visitante.emblema is not None:
-                emblema_time_visitante = ImageTk.PhotoImage(
-                    Image.open(jogo.time_visitante.emblema).resize((30, 30), Image.BILINEAR))
-            else:
-                emblema_time_visitante = self.emblema_padrao
+            emblema_time_visitante = ImageTk.PhotoImage(Image.open(jogo.time_visitante.emblema).resize((30, 30),
+                                                                                                       Image.BILINEAR))
 
             label_emblema_mandante.config(image=emblema_time_mandante)
             label_emblema_mandante.img = emblema_time_mandante
@@ -324,7 +316,7 @@ class GuiLiga:
 
             for sv in (sv_mandante, sv_visitante):
                 sv.trace('w', lambda name, index, mode, sv1=sv_mandante, sv2=sv_visitante,
-                                     index_jogo=i: self.editar_placar(sv1.get(), sv2.get(), index_jogo))
+                         index_jogo=i: self.editar_placar(sv1.get(), sv2.get(), index_jogo))
 
             entry_placar_mandante.config(textvariable=sv_mandante)
             entry_placar_visitante.config(textvariable=sv_visitante)
@@ -347,7 +339,7 @@ class GuiLiga:
         else:
             jogo.definir_placar(gols_mandante, gols_visitante)
 
-        self.label_msg.config(text='Salvando... ⌛', fg='gray')
+        self.label_msg.config(text='Salvando alterações... ⌛', fg='gray')
         self.liga.atualizar_classificacao()
         self.atualizar_tabela()
         db.update_resultado(self.liga.nome, self.rodada_atual.numero, jogo)
@@ -386,6 +378,16 @@ class GuiLiga:
         from src.gui.menu import Menu
         self.root.destroy()
         Menu()
+
+    def atualizar_highlights(self):
+        """Adiciona destaques na tabela de classificação, referentes a classificação ou rebaixamento"""
+        for hl in self.liga.highlights_tabela:
+            for row in range(hl.inicio, hl.fim + 1):
+                self.tabela_de_classificacao.config(row=row, column=0, bg=hl.bg, fg=hl.fg)
+
+    def remover_highlight(self, inicio, fim):
+        for row in range(inicio, fim+1):
+            self.tabela_de_classificacao.config(row=row, column=0, bg='gray99', fg='black')
 
     def gerar_placares(self):
         # Para testes

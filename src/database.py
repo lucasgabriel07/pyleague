@@ -1,4 +1,6 @@
 import sqlite3
+
+from src.highlight import Highlight
 from src.jogo import Jogo
 from src.rodada import Rodada
 
@@ -51,6 +53,15 @@ def create_database(liga):
                            'nome_time_visitante, gols_time_mandante, gols_time_visitante) VALUES (?,?,?,?,?,?,?)',
                            (rodada.numero, liga.nome, jogo.numero, jogo.time_mandante.nome, jogo.time_visitante.nome,
                             jogo.gols_time_mandante, jogo.gols_time_visitante))
+
+    cursor.execute('CREATE TABLE IF NOT EXISTS Highlights('
+                   'nome_liga TEXT NOT NULL,'
+                   'bg TEXT NOT NULL,'
+                   'fg TEXT NOT NULL,'
+                   'inicio INTEGER NOT NULL,'
+                   'fim INTEGER NOT NULL'
+                   ')')
+
     conn.commit()
     conn.close()
 
@@ -71,6 +82,10 @@ def update_nome_time(nome_liga, nome_antigo, nome_novo):
     cursor = conn.cursor()
     cursor.execute('UPDATE Times SET nome=(?) WHERE nome=(?) AND nome_liga=(?)',
                    (nome_novo, nome_antigo, nome_liga))
+    cursor.execute('UPDATE Jogos SET nome_time_mandante=(?) WHERE nome_time_mandante=(?)',
+                   (nome_novo, nome_antigo))
+    cursor.execute('UPDATE Jogos SET nome_time_visitante=(?) WHERE nome_time_visitante=(?)',
+                   (nome_novo, nome_antigo))
     conn.commit()
     conn.close()
 
@@ -99,6 +114,24 @@ def update_resultado(nome_liga, numero_rodada, jogo):
     cursor.execute('UPDATE Jogos SET gols_time_mandante=(?), gols_time_visitante=(?) WHERE nome_liga=(?) AND '
                    'numero_rodada=(?) AND numero_jogo=(?)',
                    (jogo.gols_time_mandante, jogo.gols_time_visitante, nome_liga, numero_rodada, jogo.numero))
+    conn.commit()
+    conn.close()
+
+
+def adicionar_highlight(nome_da_liga, hl):
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO Highlights (nome_liga, bg, fg, inicio, fim) VALUES(?,?,?,?,?)',
+                   (nome_da_liga, hl.bg, hl.fg, hl.inicio, hl.fim))
+    conn.commit()
+    conn.close()
+
+
+def remover_highlight(nome_da_liga, hl):
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM Highlights WHERE nome_liga=(?) AND bg=(?) AND fg=(?) AND inicio=(?) AND fim=(?)',
+                   (nome_da_liga, hl.bg, hl.fg, hl.inicio, hl.fim))
     conn.commit()
     conn.close()
 
@@ -183,6 +216,13 @@ def carregar_liga(nome_da_liga):
             jogo = Jogo(time_mandante, time_visitante, i+1)
             jogo.definir_placar(gols_time_mandante, gols_time_visitante)
             rodada.adicionar_jogo(jogo)
+
+    cursor.execute('SELECT bg, fg, inicio, fim FROM Highlights WHERE nome_liga=(?)', (nome_da_liga,))
+    data_highlights = cursor.fetchall()
+
+    for bg, fg, inicio, fim in data_highlights:
+        hl = Highlight(bg, fg, inicio, fim)
+        liga.adicionar_highlight(hl)
 
     conn.close()
     return liga

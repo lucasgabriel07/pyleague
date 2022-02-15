@@ -3,7 +3,6 @@ class Time:
     def __init__(self, nome, sigla, emblema=None):
         self.nome = nome
         self.sigla = sigla
-        self.emblema = emblema
         self.jogadores = []
         self.pontos = 0
         self.jogos = 0
@@ -13,6 +12,10 @@ class Time:
         self.gols_feitos = 0
         self.gols_sofridos = 0
         self.saldo_de_gols = 0
+        if emblema is not None:
+            self.emblema = emblema
+        else:
+            self.emblema = 'assets/emblemas/emblema_padrao.png'
 
     def __str__(self):
         return self.nome

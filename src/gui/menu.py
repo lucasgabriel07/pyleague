@@ -43,8 +43,16 @@ class Menu:
         self.botao_sair.pack(pady=3)
 
         self.botao_novo.bind('<Return>', lambda event: self.botao_novo.invoke())
+        self.botao_novo.bind('<Up>', lambda event: self.botao_sair.focus())
+        self.botao_novo.bind('<Down>', lambda event: self.botao_carregar.focus())
+
         self.botao_carregar.bind('<Return>', lambda event: self.botao_carregar.invoke())
+        self.botao_carregar.bind('<Up>', lambda event: self.botao_novo.focus())
+        self.botao_carregar.bind('<Down>', lambda event: self.botao_sair.focus())
+
         self.botao_sair.bind('<Return>', lambda event: self.botao_sair.invoke())
+        self.botao_sair.bind('<Up>', lambda event: self.botao_carregar.focus())
+        self.botao_sair.bind('<Down>', lambda event: self.botao_novo.focus())
 
         if x is None:
             x = (self.root.winfo_screenwidth() - 500) // 2
@@ -357,15 +365,17 @@ class AdicionaTimes:
         window.destroy()
 
     def confirmar(self, event=None):
-        for item in self.lista_de_times:
-            nome = item['nome']
-            sigla = item['sigla']
-            emblema = item['emblema']
-            time = Time(nome, sigla, emblema)
-            self.liga.adicionar_time(time)
-
-        self.root.destroy()
-        self.liga.iniciar_liga()
+        if len(self.lista_de_times) > 1:
+            for item in self.lista_de_times:
+                nome = item['nome']
+                sigla = item['sigla']
+                emblema = item['emblema']
+                time = Time(nome, sigla, emblema)
+                self.liga.adicionar_time(time)
+            self.root.destroy()
+            self.liga.iniciar_liga()
+        else:
+            messagebox.showerror('Erro!', 'Adicione pelo menos 2 times!')
 
 
 class CarregaLiga:
@@ -405,6 +415,9 @@ class CarregaLiga:
         for nome in lista_de_ligas:
             self.listbox.insert('end', nome)
 
+        self.listbox.selection_set(0)
+        self.listbox.focus_force()
+
         if x is None:
             x = (self.root.winfo_screenwidth() - 500) // 2
 
@@ -432,51 +445,3 @@ class CarregaLiga:
         y = self.root.winfo_y()
         self.root.destroy()
         Menu(x, y)
-
-
-class ImportaTimes:
-
-    def __init__(self, listbox_times):
-
-        self.listbox_times = listbox_times
-        self.root = tk.Tk()
-        self.root.title('Importar times')
-
-        self.frame0 = tk.Frame(self.root)
-        self.frame0.pack(pady=15)
-
-        self.listbox_ligas = tk.Listbox(self.frame0, bg='white', font='arial 12', selectbackground='#078745', height=7,
-                                        width=37, cursor='hand2')
-        self.scrollbar = tk.Scrollbar(self.frame0, orient=tk.VERTICAL, command=self.listbox_ligas.yview)
-        self.listbox_ligas.configure(yscrollcommand=self.scrollbar.set)
-        self.listbox_ligas.bind('<Double-Button-1>', self.confirmar)
-        self.listbox_ligas.bind('<Return>', self.confirmar)
-
-        self.listbox_ligas.grid(row=0, column=0, sticky='WE')
-        self.scrollbar.grid(row=0, column=1, sticky='NS')
-
-        self.frame_botoes = tk.Frame(self.root)
-        self.frame_botoes.pack()
-
-        self.botao_cancelar = tk.Button(self.frame_botoes, bg='white', bd=1, text='Cancelar',
-                                        command=self.root.destroy, width=8, cursor='hand2')
-        self.botao_confirmar = tk.Button(self.frame_botoes, bg='white', bd=1, text='Confirmar',
-                                         command=self.confirmar, width=8, cursor='hand2')
-        self.botao_cancelar.pack(side=tk.LEFT, padx=5)
-        self.botao_confirmar.pack(side=tk.LEFT, padx=5)
-
-        self.lista_de_ligas = db.get_ligas()
-
-        for nome in self.lista_de_ligas:
-            self.listbox_ligas.insert('end', nome)
-
-        x = (self.root.winfo_screenwidth() - 420) // 2
-        y = (self.root.winfo_screenheight() - 350) // 2
-        self.root.geometry(f'420x215+{x}+{y}')
-        self.root.mainloop()
-
-    def confirmar(self, event=None):
-        pass
-
-    def cancelar(self, event=None):
-        pass

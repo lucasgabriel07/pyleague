@@ -21,6 +21,7 @@ class Liga:
         self.jogos_por_rodada = 0
         self.index_criterio = index_criterio
         self.criterio = cf.definir_criterio(index_criterio)
+        self.highlights_tabela = []
 
     def adicionar_time(self, time):
         self.times.append(time)
@@ -98,8 +99,17 @@ class Liga:
     def adicionar_rodada(self, rodada):
         self.rodadas.append(rodada)
 
+    def get_rodada(self, index):
+        return self.rodadas[index]
+
     def atualizar_classificacao(self):
         self.classificacao = insert_sort.sort(self.classificacao, self.criterio)
 
-    def get_rodada(self, index):
-        return self.rodadas[index]
+    def adicionar_highlight(self, hl):
+        self.highlights_tabela.append(hl)
+
+    def remover_highlight(self, index):
+        self.highlights_tabela.pop(index)
+
+    def get_highlight(self, index):
+        return self.highlights_tabela[index]
