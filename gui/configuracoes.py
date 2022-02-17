@@ -7,8 +7,8 @@ from tkinter import colorchooser, messagebox, filedialog
 from PIL import ImageTk, Image
 
 from lib.auto_hide_scrollbar import AutoHideScrollbar
-from src.highlight import Highlight
-import src.database as db
+from liga.highlight import Highlight
+import database as db
 
 
 class Configuracoes:
@@ -281,7 +281,7 @@ class EditaTime:
         self.entry_nome.insert(0, time.nome)
         self.entry_nome.grid(row=0, column=0, pady=10, padx=5)
 
-        self.entry_sigla = tk.Entry(self.frame_entrys, width=4, font='arial 15 bold', fg='#078745', bg='gray95', bd=1,
+        self.entry_sigla = tk.Entry(self.frame_entrys, width=5, font='arial 15 bold', fg='#078745', bg='gray95', bd=1,
                                     justify='center', relief='groove')
         self.entry_sigla.insert(0, time.sigla)
         self.entry_sigla.grid(row=0, column=1, pady=10, padx=5)
@@ -301,11 +301,12 @@ class EditaTime:
 
     def escolher_novo_emblema(self):
         path_emblema = filedialog.askopenfilename(master=self.root)
-        novo_emblema = ImageTk.PhotoImage(Image.open(path_emblema).resize((80, 80), Image.BILINEAR),
-                                          master=self.frame_emblema)
-        self.label_emblema.config(image=novo_emblema)
-        self.label_emblema.img = novo_emblema
-        self.path_emblema = path_emblema
+        if path_emblema != '':
+            novo_emblema = ImageTk.PhotoImage(Image.open(path_emblema).resize((80, 80), Image.BILINEAR),
+                                              master=self.frame_emblema)
+            self.label_emblema.config(image=novo_emblema)
+            self.label_emblema.img = novo_emblema
+            self.path_emblema = path_emblema
 
     def salvar_alteracoes(self, event=None):
         if self.path_emblema != self.time.emblema:

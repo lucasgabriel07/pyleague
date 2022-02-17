@@ -7,8 +7,8 @@ from lib.auto_hide_scrollbar import AutoHideScrollbar
 from PIL import Image, ImageTk
 from lib.tooltip import create_tool_tip
 from tkinter.ttk import Combobox, Style
-from src.gui.configuracoes import Configuracoes, AdicionaHighlights, EditaTime
-import src.database as db
+from gui.configuracoes import Configuracoes, AdicionaHighlights, EditaTime
+import database as db
 
 
 class GuiLiga:
@@ -367,7 +367,7 @@ class GuiLiga:
             messagebox.showerror(title='Erro!', message='Já existe um campeonato com esse nome!')
 
     def excluir_liga(self):
-        from src.gui.menu import Menu
+        from gui.menu import Menu
         if messagebox.askyesno('Excluir Liga', f'Tem certeza que deseja excluir "{self.liga.nome}"?'):
             db.deletar_liga(self.liga.nome)
             messagebox.showinfo('Concluído!', f'"{self.liga.nome}" foi excluído com sucesso!')
@@ -384,7 +384,7 @@ class GuiLiga:
             db.resetar_liga(self.liga.nome)
 
     def voltar_ao_menu(self):
-        from src.gui.menu import Menu
+        from gui.menu import Menu
         self.root.destroy()
         Menu()
 

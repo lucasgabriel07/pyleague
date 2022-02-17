@@ -2,9 +2,9 @@ import tkinter as tk
 import os
 from tkinter import messagebox
 from tkinter.ttk import Combobox, Spinbox
-from src.liga import Liga
-from src.team import Time
-import src.database as db
+from liga.liga import Liga
+import database as db
+from liga.team import Time
 
 
 class Menu:
@@ -24,7 +24,7 @@ class Menu:
                                     font='arial 10 bold', bg='white', fg='red', bd=1, cursor='hand2',
                                     highlightcolor='red')
 
-        self.botao_novo.focus()
+        self.botao_novo.focus_force()
         self.botao_novo.bind('<FocusIn>', lambda event: self.botao_novo.config(bg='#078745', fg='white'))
         self.botao_novo.bind('<FocusOut>', lambda event: self.botao_novo.config(bg='white', fg='#078745'))
         self.botao_carregar.bind('<FocusIn>', lambda event: self.botao_carregar.config(bg='#078745', fg='white'))

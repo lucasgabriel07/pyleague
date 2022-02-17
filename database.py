@@ -1,8 +1,8 @@
 import sqlite3
 
-from src.highlight import Highlight
-from src.jogo import Jogo
-from src.rodada import Rodada
+from liga.highlight import Highlight
+from liga.jogo import Jogo
+from liga.rodada import Rodada
 
 
 database = 'data/database.db'
@@ -173,8 +173,8 @@ def get_times(nome_da_liga):
 
 
 def carregar_liga(nome_da_liga):
-    from src.liga import Liga
-    from src.team import Time
+    from liga.liga import Liga
+    from liga.team import Time
 
     conn = sqlite3.connect(database)
     cursor = conn.cursor()

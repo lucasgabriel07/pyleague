@@ -1,11 +1,11 @@
-from rodada import Rodada
-from jogo import Jogo
+from liga.rodada import Rodada
+from liga.jogo import Jogo
 from random import shuffle
 from gui.gui_liga import GuiLiga
-from src.team import Time
-import criterio_factory as cf
-from src import database as db
-import insert_sort
+from liga.team import Time
+import liga.criterio_factory as cf
+import database as db
+from lib import insert_sort
 
 
 class Liga:
