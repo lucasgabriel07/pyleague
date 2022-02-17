@@ -7,7 +7,7 @@ from lib.auto_hide_scrollbar import AutoHideScrollbar
 from PIL import Image, ImageTk
 from lib.tooltip import create_tool_tip
 from tkinter.ttk import Combobox, Style
-from src.gui.configuracoes import Configuracoes, AdicionaHighlights
+from src.gui.configuracoes import Configuracoes, AdicionaHighlights, EditaTime
 import src.database as db
 
 
@@ -44,11 +44,16 @@ class GuiLiga:
         self.menu_times = tk.Menu(self.menu, tearoff=0, bg='white', activebackground='#078745')
 
         for i, time in enumerate(self.liga.times):
-            emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
+            try:
+                emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
+            except FileNotFoundError:
+                time.emblema = 'assets/emblemas/emblema_padrao.png'
+                emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
+
             label = tk.Label()
             label.img = emblema
             self.menu_times.add_command(label=time.nome, image=label.img, compound='left', font='arial 10',
-                                        command=None)
+                                        command=lambda t=time: EditaTime(self.liga, t, self))
 
         self.config = Configuracoes(self.liga, self)
 
@@ -127,8 +132,8 @@ class GuiLiga:
         tabela_de_classificacao = Table(frame_classificacao, rows=rows, columns=columns,
                                         bg='gray99', font='arial 11', width=3, relief='flat', border_x=0, border_y=1)
 
-        tabela_de_classificacao.config(column=1, width=30, anchor=tk.W, padx=5)
-        tabela_de_classificacao.config(row=0, column=1, anchor=tk.CENTER)
+        tabela_de_classificacao.config(column=1, width=30, anchor=tk.W, padx=5, cursor='hand2')
+        tabela_de_classificacao.config(row=0, column=1, anchor=tk.CENTER, cursor='arrow')
 
         for i in range(2, 9, 2):
             tabela_de_classificacao.config(column=i, bg='gray95')
@@ -201,12 +206,12 @@ class GuiLiga:
             frame_time_visitante.pack(fill=tk.Y)
 
             label_emblema_mandante = tk.Label(frame_time_mandante, bg='gray99')
-            label_time_mandante = tk.Label(frame_time_mandante, bg='gray99', font='arial 12', width=3, padx=10)
+            label_time_mandante = tk.Label(frame_time_mandante, bg='gray99', font='arial 12', width=3, padx=16)
             label_emblema_mandante.pack(side=tk.RIGHT)
             label_time_mandante.pack(fill=tk.Y, expand=True)
 
             label_emblema_visitante = tk.Label(frame_time_visitante, bg='gray99')
-            label_time_visitante = tk.Label(frame_time_visitante, bg='gray99', font='arial 12', width=3, padx=10)
+            label_time_visitante = tk.Label(frame_time_visitante, bg='gray99', font='arial 12', width=3, padx=16)
             label_emblema_visitante.pack(side=tk.LEFT)
             label_time_visitante.pack(fill=tk.Y, expand=True)
 
@@ -234,6 +239,7 @@ class GuiLiga:
             self.tabela_de_classificacao.insert(i + 1, 9, time.saldo_de_gols)
 
             celula = self.tabela_de_classificacao.get_cell(i+1, 1)
+            celula.bind('<1>', lambda e, t=time: EditaTime(self.liga, t, self))
             frame_time = celula.winfo_children()[0]
 
             emblema = ImageTk.PhotoImage(Image.open(time.emblema).resize((20, 20), Image.BILINEAR))
@@ -241,8 +247,10 @@ class GuiLiga:
             label_emblema = frame_time.winfo_children()[0]
             label_emblema.config(image=emblema)
             label_emblema.img = emblema
+            label_emblema.bind('<1>', lambda e, t=time: EditaTime(self.liga, t, self))
             label_nome = frame_time.winfo_children()[1]
             label_nome.config(text=time.nome)
+            label_nome.bind('<1>', lambda e, t=time: EditaTime(self.liga, t, self))
 
     def proxima_rodada(self):
         index = self.rodada_atual.numero
@@ -302,10 +310,10 @@ class GuiLiga:
                 entry_placar_mandante.destroy()
                 entry_placar_visitante.destroy()
 
-            entry_placar_mandante = tk.Entry(frame_placar_mandante, width=3, font='arial 19 bold', fg='#078745',
-                                             justify=tk.CENTER, bd=2)
-            entry_placar_visitante = tk.Entry(frame_placar_visitante, width=3, font='arial 19 bold', fg='#078745',
-                                              justify=tk.CENTER, bd=2)
+            entry_placar_mandante = tk.Entry(frame_placar_mandante, width=2, font='arial 19 bold', fg='#078745',
+                                             justify=tk.CENTER, bd=1, bg='gray95')
+            entry_placar_visitante = tk.Entry(frame_placar_visitante, width=2, font='arial 19 bold', fg='#078745',
+                                              justify=tk.CENTER, bd=1, bg='gray95')
             entry_placar_mandante.pack(anchor=tk.CENTER, pady=5)
             entry_placar_visitante.pack(anchor=tk.CENTER, pady=5)
 
@@ -360,19 +368,20 @@ class GuiLiga:
 
     def excluir_liga(self):
         from src.gui.menu import Menu
-        if messagebox.askyesno('Excluir Campeonato', f'Tem certeza que deseja excluir "{self.liga.nome}"?'):
+        if messagebox.askyesno('Excluir Liga', f'Tem certeza que deseja excluir "{self.liga.nome}"?'):
             db.deletar_liga(self.liga.nome)
             messagebox.showinfo('Concluído!', f'"{self.liga.nome}" foi excluído com sucesso!')
             self.root.destroy()
             Menu()
 
     def resetar_liga(self):
-        for rodada in self.liga.rodadas:
-            rodada.resetar()
-        self.atualizar_tabela()
-        self.rodada_atual = self.liga.get_rodada(0)
-        self.mostrar_rodada()
-        db.resetar_liga(self.liga.nome)
+        if messagebox.askyesno('Resetar Liga', 'Tem certeza? Todos os placares serão resetados.'):
+            for rodada in self.liga.rodadas:
+                rodada.resetar()
+            self.atualizar_tabela()
+            self.rodada_atual = self.liga.get_rodada(0)
+            self.mostrar_rodada()
+            db.resetar_liga(self.liga.nome)
 
     def voltar_ao_menu(self):
         from src.gui.menu import Menu

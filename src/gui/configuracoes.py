@@ -1,5 +1,12 @@
+import os
+import shutil
 import tkinter as tk
-from tkinter import colorchooser, messagebox
+from datetime import datetime
+from tkinter import colorchooser, messagebox, filedialog
+
+from PIL import ImageTk, Image
+
+from lib.auto_hide_scrollbar import AutoHideScrollbar
 from src.highlight import Highlight
 import src.database as db
 
@@ -92,13 +99,12 @@ class AdicionaHighlights:
         label3 = tk.Label(self.frame_add_highlights, text='Cor de Fundo:', font='arial 10 bold')
         label4 = tk.Label(self.frame_add_highlights, text='Cor da Fonte:', font='arial 10 bold')
 
-        self.botao_bg = tk.Button(self.frame_add_highlights, width=3, bg=bg)
-        self.botao_fg = tk.Button(self.frame_add_highlights, width=3, bg=fg)
+        self.botao_bg = tk.Button(self.frame_add_highlights, width=3, bg=bg,
+                                  command=lambda: self.escolher_cor(self.botao_bg))
+        self.botao_fg = tk.Button(self.frame_add_highlights, width=3, bg=fg,
+                                  command=lambda: self.escolher_cor(self.botao_fg))
         botao_confirmar = tk.Button(self.frame_add_highlights, text='Ok', bg='white', bd=1,
                                     command=lambda: self.confirmar(edicao, index))
-
-        self.botao_bg.bind('<1>', lambda e: self.escolher_cor(e))
-        self.botao_fg.bind('<1>', lambda e: self.escolher_cor(e))
 
         label1.grid(row=0, column=0)
         self.entry.grid(row=0, column=1, padx=5)
@@ -142,9 +148,9 @@ class AdicionaHighlights:
                 else:
                     label_posicoes.config(text=f'{highlight.inicio} - {highlight.fim}')
 
-                botao_editar = tk.Button(self.frame_principal, image=self.icone_editar, bd=0,
+                botao_editar = tk.Button(self.frame_principal, image=self.icone_editar, bd=0, cursor='hand2',
                                          command=lambda index=i: self.editar_highlight(index))
-                botao_deletar = tk.Button(self.frame_principal, image=self.icone_deletar, bd=0,
+                botao_deletar = tk.Button(self.frame_principal, image=self.icone_deletar, bd=0, cursor='hand2',
                                           command=lambda index=i: self.remover_highlight(index))
 
                 label_posicoes.grid(row=i + 1, column=0, pady=1, padx=1, sticky='WE')
@@ -153,9 +159,9 @@ class AdicionaHighlights:
                 botao_editar.grid(row=i + 1, column=3, padx=3)
                 botao_deletar.grid(row=i + 1, column=4)
 
-    def escolher_cor(self, event):
+    def escolher_cor(self, botao):
         cor = colorchooser.askcolor(parent=self.window_add_highlights)[1]
-        event.widget.config(bg=cor)
+        botao.config(bg=cor)
 
     def confirmar(self, edicao=False, index=None):
         entrada = self.entry.get()
@@ -230,3 +236,121 @@ class AdicionaHighlights:
                 return False
 
         return True
+
+
+class EditaTime:
+
+    def __init__(self, liga, time, gui_liga):
+        self.liga = liga
+        self.time = time
+        self.gui_liga = gui_liga
+
+        self.root = tk.Tk()
+        self.root.title(time.nome)
+        self.root.focus_force()
+
+        self.canvas = tk.Canvas(self.root, highlightthickness=0)
+        self.yscrollbar = AutoHideScrollbar(self.root, orient=tk.VERTICAL, command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.yscrollbar.set)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.frame_principal = tk.Frame(self.canvas)
+        self.frame_principal.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        window = self.canvas.create_window((0, 0), window=self.frame_principal, anchor=tk.N)
+        self.canvas.bind('<Configure>', lambda e: self.canvas.itemconfig(window, width=e.width))
+
+        self.frame_emblema = tk.Frame(self.frame_principal)
+        self.frame_emblema.pack(pady=10)
+
+        emblema = ImageTk.PhotoImage(Image.open(self.time.emblema).resize((80, 80), Image.BILINEAR),
+                                     master=self.frame_emblema)
+        self.label_emblema = tk.Label(self.frame_emblema, image=emblema, cursor='hand2')
+        self.label_emblema.pack(side='left', pady=10)
+        self.label_emblema.bind('<1>', lambda e: self.escolher_novo_emblema())
+
+        icone_editar = tk.PhotoImage(file='assets/icones/edit.png', master=self.frame_emblema)
+        self.botao_editar = tk.Button(self.frame_emblema, image=icone_editar, bd=0, cursor='hand2',
+                                      command=self.escolher_novo_emblema)
+        self.botao_editar.pack(side='bottom')
+
+        self.frame_entrys = tk.Frame(self.frame_principal)
+        self.frame_entrys.pack()
+
+        self.entry_nome = tk.Entry(self.frame_entrys, width=25, font='arial 15 bold', fg='#078745', bg='gray95', bd=1,
+                                   justify='center', relief='groove')
+        self.entry_nome.insert(0, time.nome)
+        self.entry_nome.grid(row=0, column=0, pady=10, padx=5)
+
+        self.entry_sigla = tk.Entry(self.frame_entrys, width=4, font='arial 15 bold', fg='#078745', bg='gray95', bd=1,
+                                    justify='center', relief='groove')
+        self.entry_sigla.insert(0, time.sigla)
+        self.entry_sigla.grid(row=0, column=1, pady=10, padx=5)
+
+        self.entry_nome.bind('<Return>', lambda e: self.salvar_alteracoes())
+        self.entry_sigla.bind('<Return>', lambda e: self.salvar_alteracoes())
+
+        self.botao_salvar = tk.Button(self.frame_principal, text='Salvar', bg='white', bd=1, font='arial 11',
+                                      cursor='hand2', command=self.salvar_alteracoes)
+        self.botao_salvar.pack(pady='30')
+
+        self.path_emblema = self.time.emblema
+
+        self.root.geometry('450x275+425+200')
+        self.root.resizable(0, 0)
+        self.root.mainloop()
+
+    def escolher_novo_emblema(self):
+        path_emblema = filedialog.askopenfilename(master=self.root)
+        novo_emblema = ImageTk.PhotoImage(Image.open(path_emblema).resize((80, 80), Image.BILINEAR),
+                                          master=self.frame_emblema)
+        self.label_emblema.config(image=novo_emblema)
+        self.label_emblema.img = novo_emblema
+        self.path_emblema = path_emblema
+
+    def salvar_alteracoes(self, event=None):
+        if self.path_emblema != self.time.emblema:
+            self.editar_emblema()
+        if self.entry_nome.get() != self.time.nome:
+            self.renomear_time()
+        if self.entry_sigla.get() != self.time.sigla:
+            self.alterar_sigla()
+        self.gui_liga.atualizar_tabela()
+        self.gui_liga.mostrar_rodada()
+        self.root.destroy()
+
+    def editar_emblema(self):
+        path = 'assets/emblemas'
+        destino = shutil.copy(self.path_emblema, path)
+        data = datetime.today()
+
+        nome_arquivo = f'assets/emblemas/EMB-{self.time.nome.replace(" ", "_")}_{data.day}-{data.month}-' \
+                       f'{data.year}_{data.hour}.{data.minute}.{data.second}.png'
+
+        os.rename(destino, nome_arquivo)
+
+        self.time.emblema = nome_arquivo
+        db.update_emblema_time(self.liga.nome, self.time.nome, self.time.emblema)
+
+    def renomear_time(self):
+        nome_novo = self.entry_nome.get().strip()
+        if nome_novo != '':
+            if self.nome_existente(nome_novo) is False:
+                nome_antigo = self.time.nome
+                self.time.nome = nome_novo
+                db.update_nome_time(self.liga.nome, nome_antigo, self.time.nome)
+            else:
+                messagebox.showerror(title='Erro!', message='Já existe um time cadastrado com esse nome!')
+        else:
+            messagebox.showerror(title='Erro!', message='Entrada inválida!')
+
+    def alterar_sigla(self):
+        sigla_nova = self.entry_sigla.get().strip()[:3]
+        if sigla_nova != '':
+            self.time.sigla = sigla_nova
+            db.update_sigla_time(self.liga.nome, self.time.nome, self.time.sigla)
+        else:
+            messagebox.showerror(title='Erro!', message='Entrada inválida!')
+
+    def nome_existente(self, nome):
+        lista_de_nomes = [time.nome for time in self.liga.times]
+        return nome in lista_de_nomes

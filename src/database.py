@@ -73,6 +73,7 @@ def update_nome_liga(nome_antigo, nome_novo):
     cursor.execute('UPDATE Times SET nome_liga=(?) WHERE nome_liga=(?)', (nome_novo, nome_antigo))
     cursor.execute('UPDATE Jogos SET nome_liga=(?) WHERE nome_liga=(?)', (nome_novo, nome_antigo))
     cursor.execute('UPDATE Rodadas SET nome_liga=(?) WHERE nome_liga=(?)', (nome_novo, nome_antigo))
+    cursor.execute('UPDATE Highlights SET nome_liga=(?) WHERE nome_liga=(?)', (nome_novo, nome_antigo))
     conn.commit()
     conn.close()
 
