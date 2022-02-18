@@ -1,5 +1,7 @@
 # Pyleague
 
+![Screenshot](screenshot.png)
+
 ## 📋 Descrição
 
 Gerenciador de campeonatos de futebol
@@ -40,5 +42,3 @@ python main.py
 ```
 
 ##
-
-![screenshot](screenshot.png)
