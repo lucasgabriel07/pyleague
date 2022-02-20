@@ -9,6 +9,9 @@ Gerenciador de campeonatos de futebol
 ## ⚙ Funcionalidades
 
 - Criar liga
+- Criar times
+- Importar times de outras ligas
+- Carregar liga
 - Atualizar placares
 - Editar liga
 - Editar times
