@@ -13,6 +13,7 @@ Gerenciador de campeonatos de futebol
 - Importar times de outras ligas
 - Carregar liga
 - Atualizar placares
+- Adicionar destaques na tabela indicando classificação e rebaixamento
 - Editar liga
 - Editar times
 
